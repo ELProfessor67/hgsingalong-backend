@@ -13,8 +13,8 @@ app.use(express.urlencoded({extended: true}))
 
 app.post('/api/v1/login',async (req,res) => {
     try {
-        const users = await clerkClient.users.getUserList();
         const {email,password} = req.body;
+        const users = await clerkClient.users.getUserList({emailAddress: email});
         console.log(email)
         const user  = getUserByEmail(users.data,email)
         if(!user){
@@ -70,6 +70,16 @@ app.post('/api/v1/register',async (req,res) => {
             });
             return
         }
+        const users = await clerkClient.users.getUserList({emailAddress: email});
+        const isExist = getUserByEmail(users,email)
+
+        if(isExist){
+            res.status(401).json({
+                success: false,
+                message: "User Already Exist"
+            });
+            return
+        }
         const user = await clerkClient.users.createUser({
             firstName: name,
             lastName: '',
@@ -102,7 +112,7 @@ app.post('/api/v1/register',async (req,res) => {
 app.post('/api/v1/login-by-email',async (req,res) => {
     try {
         const {email,name} = req.body
-
+        console.log('sss')
         if(!email){
             res.status(401).json({
                 success: false,
@@ -110,8 +120,10 @@ app.post('/api/v1/login-by-email',async (req,res) => {
             });
             return
         }
-        const users = await clerkClient.users.getUserList();
+        const users = await clerkClient.users.getUserList({emailAddress: email});
+   
         const user  = getUserByEmail(users.data,email)
+        console.log(user)
         if(user){
             res.status(201).json({
                 success: true,

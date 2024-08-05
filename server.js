@@ -80,6 +80,8 @@ app.post('/api/v1/register',async (req,res) => {
             });
             return
         }
+
+        
         const user = await clerkClient.users.createUser({
             firstName: name,
             lastName: '',
@@ -102,7 +104,7 @@ app.post('/api/v1/register',async (req,res) => {
     } catch (error) {
         res.status(501).json({
             success: false,
-            message: error.message
+            message: 'password too weak please make strong password.'
         })
     }
 })

@@ -14,8 +14,7 @@ app.use(express.urlencoded({extended: true}))
 app.post('/api/v1/login',async (req,res) => {
     try {
         const {email,password} = req.body;
-        const users = await clerkClient.users.getUserList({emailAddress: email});
-        console.log(email)
+        const users = await clerkClient.users.getUserList({emailAddress: [email]});
         const user  = getUserByEmail(users.data,email)
         if(!user){
             res.status(401).json({
@@ -29,8 +28,11 @@ app.post('/api/v1/login',async (req,res) => {
             const response = await clerkClient.users.verifyPassword({
                 userId: user.id,
                 password: password
-            })
+            });
             if(response.verified){
+
+               
+
                 res.status(201).json({
                     success: true,
                     message: `Welcome Back ${user?.firstName}`,
@@ -40,6 +42,7 @@ app.post('/api/v1/login',async (req,res) => {
                 })
             }
         } catch (error) {
+            console.log(error.message)
             res.status(401).json({
                 success: false,
                 message: "Invalid Details"
@@ -70,8 +73,9 @@ app.post('/api/v1/register',async (req,res) => {
             });
             return
         }
-        const users = await clerkClient.users.getUserList({emailAddress: email});
-        const isExist = getUserByEmail(users,email)
+        const users = await clerkClient.users.getUserList({emailAddress: [email]});
+     
+        const isExist = getUserByEmail(users.data,email)
 
         if(isExist){
             res.status(401).json({
@@ -108,6 +112,54 @@ app.post('/api/v1/register',async (req,res) => {
         })
     }
 })
+
+
+
+
+
+
+app.post('/api/v1/verify-login-otp', async (req, res) => {
+    try {
+        const { userId, code } = req.body;
+
+        if (!userId || !code) {
+            return res.status(400).json({ success: false, message: "User ID and OTP are required" });
+        }
+
+        // Verify OTP
+        const response = await clerkClient.users.attemptEmailAddressVerification({ userId, code });
+
+        if (response.verified) {
+            return res.status(200).json({
+                success: true,
+                message: "Login successful!",
+                user_id: userId
+            });
+        } else {
+            return res.status(400).json({ success: false, message: "Invalid or expired OTP." });
+        }
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "OTP verification failed." });
+    }
+});
+
+
+app.post('/api/v1/resend-login-otp', async (req, res) => {
+    try {
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "User ID is required" });
+        }
+
+        await clerkClient.users.createEmailAddressVerification({ userId });
+
+        return res.status(200).json({ success: true, message: "OTP has been resent." });
+
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Failed to resend OTP." });
+    }
+});
 
 
 
